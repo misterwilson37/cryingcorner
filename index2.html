@@ -63,7 +63,7 @@
             aspect-ratio: 16/9; 
         }
 
-        /* --- THE IMAGE LAYERS (ALL PNGs) --- */
+        /* --- THE IMAGE LAYERS --- */
         .bg-layer {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -126,8 +126,8 @@
         
         /* Hidden Secret Buttons */
         .secret-btn {
-            opacity: 0; /* Invisible but still takes up space and is clickable */
-            transition: opacity 1.5s ease; /* Matches the image fade speed */
+            opacity: 0; /* Invisible but still takes up space */
+            transition: opacity 1.5s ease; 
         }
         .secret-btn.revealed {
             opacity: 1;
@@ -159,7 +159,6 @@
         <div id="layer-darkness" class="bg-layer active"></div>
         <div id="layer-spotlight" class="bg-layer"></div>
         <div id="layer-offset" class="bg-layer"></div>
-        
         <div id="layer-counting" class="bg-layer"></div>
         <div id="layer-mates1" class="bg-layer"></div>
         <div id="layer-mates2" class="bg-layer"></div>
@@ -203,16 +202,13 @@
         }
 
         function setLighting(state) {
-            // Fade everything out
             document.querySelectorAll('.bg-layer').forEach(layer => layer.classList.remove('active'));
 
-            // Fade the requested layer in
             if (state !== 'pitch-black') {
                 const targetLayer = document.getElementById('layer-' + state);
                 if(targetLayer) targetLayer.classList.add('active');
             }
 
-            // Update button active states (only for the top row visual controls)
             document.querySelectorAll('.controls-row:first-child .control-btn').forEach(btn => btn.classList.remove('active'));
             const activeBtn = document.getElementById('btn-' + state);
             if (activeBtn && activeBtn.closest('.controls-row') === document.querySelector('.controls-row:first-child')) {
@@ -232,28 +228,67 @@
             }
         }
 
+        // --- Easter Egg State Logic ---
+        
+        let countRevealed = false;
+        let countClickable = false;
+
         function triggerCount() {
-            if (!btnCount.classList.contains('revealed')) {
+            if (!countRevealed) {
+                // Click 1: Trigger the fade-in, but don't show the image
+                countRevealed = true;
                 btnCount.classList.add('revealed');
+                
+                // Wait exactly 1.5s for the CSS fade to finish before unlocking the button
+                setTimeout(() => {
+                    countClickable = true;
+                }, 1500); 
+                return; // Stop the script here so the image doesn't change yet
             }
+
+            // Ignore clicks if the button is still in the process of fading in
+            if (!countClickable) return; 
+
+            // Click 2+: Change the image
             setLighting('counting');
         }
 
+        let doneRevealed = false;
+        let doneClickable = false;
+        let matesStage = 0; // 0 = mates1 next, 1 = mates2 next
+
         function triggerMates() {
-            if (!btnDone.classList.contains('revealed')) {
-                // First invisible click: Show mates1 and fade button in
+            if (!doneRevealed) {
+                // Click 1: Trigger the fade-in
+                doneRevealed = true;
                 btnDone.classList.add('revealed');
+                
+                setTimeout(() => {
+                    doneClickable = true;
+                }, 1500);
+                return;
+            }
+
+            if (!doneClickable) return;
+
+            if (matesStage === 0) {
+                // Click 2: Show mates1
                 setLighting('mates1');
                 
-                // Wait 1.5s for the image crossfade to finish, then change the button text
+                // Temporarily lock the button so they can't skip the image fade
+                doneClickable = false; 
+                
                 setTimeout(() => {
                     btnDone.innerText = "it's luck";
+                    doneClickable = true; // Unlock button for the final click
+                    matesStage = 1;
                 }, 1500);
                 
-            } else if (btnDone.innerText === "it's luck") {
-                // Second click: Show mates2 and launch confetti
+            } else if (matesStage === 1) {
+                // Click 3: Show mates2 and throw confetti
                 setLighting('mates2');
                 fireConfetti();
+                // Optional: set doneClickable = false here if you only want confetti once
             }
         }
 
