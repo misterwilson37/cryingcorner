@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Crying Corner</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000000; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            color: #555;
+            overflow: hidden; 
+        }
+
+        /* --- THE ENTRANCE MODAL --- */
+        #entrance-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 2s ease; 
+        }
+        #btn-enter {
+            background: none;
+            border: 1px solid #333;
+            color: #777;
+            font-family: monospace;
+            font-size: 1.2rem;
+            padding: 15px 30px;
+            cursor: pointer;
+            transition: all 0.5s ease;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        #btn-enter:hover {
+            color: #ccc;
+            border-color: #666;
+            box-shadow: 0 0 15px rgba(255,255,255,0.1);
+        }
+
+        /* --- THE CORNER CONTAINER --- */
+        #corner-container {
+            position: relative; 
+            width: 90vw;
+            max-width: 800px;
+            aspect-ratio: 16/9; 
+        }
+
+        /* --- THE IMAGE LAYERS (ALL PNGs NOW) --- */
+        .bg-layer {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-size: contain; 
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0; 
+            transition: opacity 1.5s ease-in-out; 
+            pointer-events: none; 
+        }
+        
+        .bg-layer.active {
+            opacity: 1;
+        }
+
+        /* Base Lighting Layers */
+        #layer-darkness { background-image: url('dark-corner.png'); }
+        #layer-spotlight { background-image: url('spotlight-corner.png'); }
+        #layer-offset { background-image: url('spotlight-offset.png'); }
+        
+        /* Easter Egg Layers */
+        #layer-counting { background-image: url('dark-counting.png'); }
+        #layer-mates1 { background-image: url('mates1.png'); }
+        #layer-mates2 { background-image: url('mates2.png'); }
+
+        /* --- MOOD CONTROLS --- */
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column; 
+            gap: 15px;
+            align-items: center;
+            z-index: 10; 
+        }
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+        button.control-btn {
+            background-color: #111;
+            color: #777;
+            border: 1px solid #333;
+            padding: 12px 20px;
+            font-family: monospace;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button.control-btn:hover {
+            background-color: #222;
+            color: #aaa;
+        }
+        button.control-btn.active {
+            border-color: #777;
+            color: #eee;
+            background-color: #333;
+        }
+        
+        /* Hidden Class for Easter Eggs */
+        .hidden-btn {
+            display: none !important;
+        }
+
+        /* Music Button Styling */
+        #btn-music {
+            border-color: #333;
+            color: #777;
+        }
+        #btn-music.playing {
+            border-color: #611;
+            color: #d55;
+            background-color: #311;
+        }
+        #btn-music.playing:hover {
+            background-color: #411;
+            color: #f77;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="entrance-modal">
+        <button id="btn-enter" onclick="enterCorner()">Enter the Crying Corner</button>
+    </div>
+
+    <div id="corner-container">
+        <div id="layer-darkness" class="bg-layer active"></div>
+        <div id="layer-spotlight" class="bg-layer"></div>
+        <div id="layer-offset" class="bg-layer"></div>
+        
+        <div id="layer-counting" class="bg-layer"></div>
+        <div id="layer-mates1" class="bg-layer"></div>
+        <div id="layer-mates2" class="bg-layer"></div>
+    </div>
+
+    <div class="controls">
+        <div class="controls-row">
+            <button id="btn-darkness" class="control-btn active" onclick="setLighting('darkness')">Darkness</button>
+            <button id="btn-spotlight" class="control-btn" onclick="setLighting('spotlight')">Spotlight (Center)</button>
+            <button id="btn-offset" class="control-btn" onclick="setLighting('offset')">Spotlight (Offset)</button>
+            <button id="btn-pitch-black" class="control-btn" onclick="setLighting('pitch-black')">Pitch Black</button>
+        </div>
+        
+        <div class="controls-row">
+            <button id="btn-count" class="control-btn hidden-btn" onclick="setLighting('counting')">Count the tears</button>
+            <button id="btn-music" class="control-btn" onclick="toggleMusic()">Start the Violins</button>
+            <button id="btn-done" class="control-btn hidden-btn" onclick="triggerMates()">done</button>
+        </div>
+    </div>
+
+    <audio id="sad-music" loop>
+        <source src="sad-violin.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const modal = document.getElementById('entrance-modal');
+        const music = document.getElementById('sad-music');
+        const musicBtn = document.getElementById('btn-music');
+        const btnCount = document.getElementById('btn-count');
+        const btnDone = document.getElementById('btn-done');
+
+        function enterCorner() {
+            music.play();
+            musicBtn.innerText = "Stop the Violins";
+            musicBtn.classList.add('playing');
+
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 2000); 
+        }
+
+        function setLighting(state) {
+            // Fade everything out
+            document.querySelectorAll('.bg-layer').forEach(layer => layer.classList.remove('active'));
+
+            // Fade the requested layer in
+            if (state !== 'pitch-black') {
+                const targetLayer = document.getElementById('layer-' + state);
+                if(targetLayer) targetLayer.classList.add('active');
+            }
+
+            // Update button active states (only for the top row to keep it clean)
+            document.querySelectorAll('.controls-row:first-child .control-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById('btn-' + state);
+            if (activeBtn && activeBtn.parentElement.classList.contains('controls-row')) {
+                activeBtn.classList.add('active');
+            }
+        }
+
+        function toggleMusic() {
+            // Easter Egg Trigger: Reveal the hidden buttons when the music is interacted with
+            btnCount.classList.remove('hidden-btn');
+            btnDone.classList.remove('hidden-btn');
+
+            if (music.paused) {
+                music.play();
+                musicBtn.innerText = "Stop the Violins";
+                musicBtn.classList.add('playing');
+            } else {
+                music.pause();
+                musicBtn.innerText = "Start the Violins";
+                musicBtn.classList.remove('playing');
+            }
+        }
+
+        function triggerMates() {
+            if (btnDone.innerText === "done") {
+                // First click: Show mates1 and change text
+                setLighting('mates1');
+                btnDone.innerText = "it's luck";
+                fireConfetti();
+            } else {
+                // Second click: Show mates2
+                setLighting('mates2');
+                fireConfetti();
+            }
+        }
+
+        function fireConfetti() {
+            // A quick burst of standard confetti
+            confetti({
+                particleCount: 150,
+                spread: 80,
+                origin: { y: 0.6 },
+                colors: ['#555555', '#888888', '#bbbbbb', '#ffffff'] // Grayscale confetti to match the mood!
+            });
+        }
+    </script>
+</body>
+</html>
