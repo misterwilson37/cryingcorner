@@ -10,7 +10,7 @@
             padding: 0;
             width: 100%;
             height: 100%;
-            background-color: #050505;
+            background-color: #050505; /* The main page background */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -18,16 +18,17 @@
             font-family: monospace;
             color: #555;
         }
-        /* The Corner Window */
+        /* The Corner Window - BORDER REMOVED FOR SEAMLESS BLEND */
         #corner-container {
             width: 90vw;
             max-width: 600px;
             aspect-ratio: 1/1;
-            background-image: url('dark-corner.png');
+            /* Pointing to the PNG file now */
+            background-image: url('dark-corner.png'); 
             background-size: cover;
             background-position: center;
-            border: 2px solid #222;
-            box-shadow: 0 0 30px rgba(0,0,0,0.9);
+            /* Box-shadow remains to provide slight depth, but no edge */
+            box-shadow: 0 0 50px rgba(0,0,0,1); 
             transition: background-image 0.2s ease-in-out;
         }
         /* The Mood Controls */
@@ -87,7 +88,7 @@
         const musicBtn = document.getElementById('btn-music');
 
         function setLighting(state) {
-            // Swap out the background image
+            // Swap out the background image (All PNGs now)
             if (state === 'dark') {
                 corner.style.backgroundImage = "url('dark-corner.png')";
             } else if (state === 'spotlight') {
