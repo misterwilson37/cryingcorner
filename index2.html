@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Crying Corner</title>
     
+    <link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&display=swap" rel="stylesheet">
+
     <style>
         body, html {
             margin: 0;
@@ -61,7 +63,7 @@
             aspect-ratio: 16/9; 
         }
 
-        /* --- THE IMAGE LAYERS --- */
+        /* --- THE BASE IMAGE LAYERS --- */
         .bg-layer {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -72,29 +74,60 @@
             transition: opacity 1.5s ease-in-out; 
             pointer-events: none; 
         }
-        
         .bg-layer.active {
             opacity: 1;
-        }
-
-        /* --- TALLY OVERLAY (New) --- */
-        #layer-tallies {
-            background-image: url('dark-counting.png'); /* 100 tallies on transparent BG */
-            z-index: 20; /* Sits on top */
-            
-            /* Apply a CSS mask to control progress */
-            -webkit-mask-image: linear-gradient(to right, black 0%, transparent 0%);
-            mask-image: linear-gradient(to right, black 0%, transparent 0%);
         }
 
         /* Base Lighting Layers */
         #layer-darkness { background-image: url('dark-corner.png'); }
         #layer-spotlight { background-image: url('spotlight-corner.png'); }
         #layer-offset { background-image: url('spotlight-offset.png'); }
-        
-        /* Easter Egg Layers */
-        #layer-counting { background-image: url('dark-counting.png'); }
         #layer-chair { background-image: url('red-chair.png'); }
+
+        /* --- TALLY OVERLAY SYSTEM --- */
+        #layer-tallies {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url('counting-layer.png'); 
+            background-size: contain; 
+            background-repeat: no-repeat;
+            background-position: center;
+            z-index: 20; 
+            pointer-events: none;
+            opacity: 0; 
+            transition: opacity 1.5s ease-in-out;
+            
+            /* The Screen Blend Magic */
+            mix-blend-mode: screen; 
+            filter: opacity(0.75); /* Softens the chalk slightly */
+            
+            /* CSS mask to control the 1-100 wipe */
+            -webkit-mask-image: linear-gradient(to right, black 0%, transparent 0%);
+            mask-image: linear-gradient(to right, black 0%, transparent 0%);
+        }
+        #layer-tallies.active {
+            opacity: 1;
+        }
+
+        /* Dynamic Scratchy Text for the Right Wall */
+        #tally-text-container {
+            position: absolute;
+            top: 45%;
+            right: 15%;
+            font-family: 'Shadows Into Light', cursive;
+            font-size: 2.2rem;
+            color: rgba(200, 200, 200, 0.5); 
+            transform: rotate(2deg); 
+            z-index: 21;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            pointer-events: none;
+            text-align: center;
+            line-height: 1.2;
+        }
+        #tally-text-container.active {
+            opacity: 1;
+        }
 
         /* --- MOOD CONTROLS --- */
         .controls {
@@ -154,14 +187,6 @@
             background-color: #411;
             color: #f77;
         }
-
-        /* --- VISITOR COUNTER TEXT (New) --- */
-        #visitor-counter {
-            font-size: 0.9rem;
-            color: #333; /* Very dark gray */
-            letter-spacing: 1px;
-            margin-top: 5px;
-        }
     </style>
 </head>
 <body>
@@ -171,23 +196,21 @@
     </div>
 
     <div id="corner-container">
-        <div id="layer-tallies" class="bg-layer active"></div>
+        <div id="layer-tallies"></div>
+        <div id="tally-text-container">Sets of 100:<br><span id="sets-count">0</span></div>
 
         <div id="layer-darkness" class="bg-layer active"></div>
         <div id="layer-spotlight" class="bg-layer"></div>
         <div id="layer-offset" class="bg-layer"></div>
-        <div id="layer-counting" class="bg-layer"></div>
         <div id="layer-chair" class="bg-layer"></div>
     </div>
 
-    <div id="visitor-counter">Cries recorded today: <span id="visit-count">0</span></div>
-
     <div class="controls">
         <div class="controls-row">
-            <button id="btn-darkness" class="control-btn active" onclick="setLighting('darkness')">Darkness</button>
-            <button id="btn-spotlight" class="control-btn" onclick="setLighting('spotlight')">Spotlight (Center)</button>
-            <button id="btn-offset" class="control-btn" onclick="setLighting('offset')">Spotlight (Offset)</button>
-            <button id="btn-pitch-black" class="control-btn" onclick="setLighting('pitch-black')">Pitch Black</button>
+            <button id="btn-darkness" class="control-btn active" onclick="setBaseLighting('darkness')">Darkness</button>
+            <button id="btn-spotlight" class="control-btn" onclick="setBaseLighting('spotlight')">Spotlight (Center)</button>
+            <button id="btn-offset" class="control-btn" onclick="setBaseLighting('offset')">Spotlight (Offset)</button>
+            <button id="btn-pitch-black" class="control-btn" onclick="setBaseLighting('pitch-black')">Pitch Black</button>
         </div>
         
         <div class="controls-row">
@@ -209,71 +232,62 @@
         const modal = document.getElementById('entrance-modal');
         const music = document.getElementById('sad-music');
         const musicBtn = document.getElementById('btn-music');
+        const hiddenSobbing = document.getElementById('hidden-sobbing');
+        
         const btnCount = document.getElementById('btn-count');
         const btnChair = document.getElementById('btn-chair');
-        const visitCount = document.getElementById('visit-count');
+        
         const tallyLayer = document.getElementById('layer-tallies');
-        const hiddenSobbing = document.getElementById('hidden-sobbing');
+        const tallyTextContainer = document.getElementById('tally-text-container');
+        const setsCountDisplay = document.getElementById('sets-count');
 
-        // --- NEW LIVE TALLY INTEGRATION ---
+        let currentVisitCount = 0;
 
-        // Free visitor counter API: api.countapi.xyz
-        // We generate a unique key for the site based on the domain.
-        const siteKey = 'cryingcorner-visits'; // You can change this to be unique.
-        const countUrl = 'https://api.countapi.xyz/get/' + siteKey;
+        // --- VISITOR COUNTER API ---
+        const siteKey = 'cryingcorner-visits'; // Change this if you ever want to reset the count to 0
+        const countUrl = 'https://api.countapi.xyz/hit/' + siteKey; 
 
-        // On window load, fetch the visit count
         window.onload = function() {
             fetch(countUrl)
                 .then(response => response.json())
                 .then(data => {
-                    const count = data.value;
-                    visitCount.innerText = count;
-                    updateVisualTallies(count);
+                    currentVisitCount = data.value;
+                    updateVisualTallies(currentVisitCount);
                 })
                 .catch(error => console.log('Tally Error:', error));
         };
 
         function updateVisualTallies(count) {
-            // There are 100 tallies in all-tallies.png (20 groups of 5)
-            const maxTallies = 100;
-            const percentage = Math.min((count / maxTallies) * 100, 100);
+            // Calculate sets of 100 and the remainder
+            const setsOf100 = Math.floor(count / 100);
+            const remainder = count % 100;
             
-            // Update the CSS mask to reveal the correct percentage of tallies
+            // Update the scratched text on the right wall
+            setsCountDisplay.innerText = setsOf100;
+
+            // Update the CSS mask to reveal 1-100 tallies on the left wall
+            let percentage = (remainder / 100) * 100;
+            
+            // If the count is exactly a multiple of 100, show all 100 tallies before wiping
+            if (count > 0 && remainder === 0) percentage = 100;
+
             tallyLayer.style.webkitMaskImage = 'linear-gradient(to right, black ' + percentage + '%, transparent ' + percentage + '%)';
             tallyLayer.style.maskImage = 'linear-gradient(to right, black ' + percentage + '%, transparent ' + percentage + '%)';
         }
 
-        // --- ENTRANCE & MAIN LOGIC ---
+        // --- ENTRANCE & AUDIO LOGIC ---
 
         function enterCorner() {
             music.play();
             musicBtn.innerText = "Stop the Violins";
             musicBtn.classList.add('playing');
             
-            // Start the hidden sobbing timer
             scheduleHiddenSobbing();
 
             modal.style.opacity = '0';
             setTimeout(() => {
                 modal.style.display = 'none';
             }, 2000); 
-        }
-
-        function setLighting(state) {
-            // Fades all layers, but KEEPS TALLIES VISIBLE if they were on
-            document.querySelectorAll('.bg-layer:not(#layer-tallies)').forEach(layer => layer.classList.remove('active'));
-
-            if (state !== 'pitch-black') {
-                const targetLayer = document.getElementById('layer-' + state);
-                if(targetLayer) targetLayer.classList.add('active');
-            }
-
-            document.querySelectorAll('.controls-row:first-child .control-btn').forEach(btn => btn.classList.remove('active'));
-            const activeBtn = document.getElementById('btn-' + state);
-            if (activeBtn && activeBtn.closest('.controls-row') === document.querySelector('.controls-row:first-child')) {
-                activeBtn.classList.add('active');
-            }
         }
 
         function toggleMusic() {
@@ -288,25 +302,42 @@
             }
         }
 
-        // --- HIDDEN SOBBING LOGIC (New) ---
-
         function scheduleHiddenSobbing() {
-            // Random time between 15 and 45 seconds (15000ms to 45000ms)
+            // Randomly plays the sobbing between every 15 and 45 seconds
             const randomTime = Math.floor(Math.random() * (45000 - 15000 + 1)) + 15000;
-            
             setTimeout(() => {
-                if(!hiddenSobbing.ended) { // Prevent play during active playback
-                    hiddenSobbing.currentTime = 0; // Restart from beginning
-                    hiddenSobbing.play().catch(error => console.log('Audio Error:', error)); // Browsers may block auto-play
+                if(!hiddenSobbing.ended) { 
+                    hiddenSobbing.currentTime = 0; 
+                    hiddenSobbing.play().catch(error => console.log('Audio Error:', error)); 
                 }
-                scheduleHiddenSobbing(); // Schedule the next one
+                scheduleHiddenSobbing(); 
             }, randomTime);
         }
 
-        // --- Easter Egg State Logic ---
+        // --- BASE IMAGE LOGIC ---
+
+        function setBaseLighting(state) {
+            document.querySelectorAll('.bg-layer').forEach(layer => layer.classList.remove('active'));
+
+            if (state !== 'pitch-black') {
+                const targetLayer = document.getElementById('layer-' + state);
+                if(targetLayer) targetLayer.classList.add('active');
+            }
+
+            document.querySelectorAll('.controls-row:first-child .control-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById('btn-' + state);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            if (state !== 'chair') {
+                btnChair.classList.remove('active');
+            }
+        }
+
+        // --- EASTER EGG LOGIC ---
         
         let countRevealed = false;
         let countClickable = false;
+        let talliesVisible = false;
 
         function triggerCount() {
             if (!countRevealed) {
@@ -316,7 +347,20 @@
                 return; 
             }
             if (!countClickable) return; 
-            setLighting('counting');
+            
+            if (!talliesVisible) {
+                tallyLayer.classList.add('active');
+                tallyTextContainer.classList.add('active');
+                btnCount.innerText = "live in ignorance";
+                btnCount.classList.add('active');
+                talliesVisible = true;
+            } else {
+                tallyLayer.classList.remove('active');
+                tallyTextContainer.classList.remove('active');
+                btnCount.innerText = "Count the tears";
+                btnCount.classList.remove('active');
+                talliesVisible = false;
+            }
         }
 
         let chairRevealed = false;
@@ -330,7 +374,9 @@
                 return;
             }
             if (!chairClickable) return;
-            setLighting('chair');
+
+            setBaseLighting('chair');
+            btnChair.classList.add('active');
         }
     </script>
 </body>
