@@ -10,28 +10,61 @@
             padding: 0;
             width: 100%;
             height: 100%;
-            background-color: #050505; /* The main page background */
+            background-color: #050505;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             font-family: monospace;
             color: #555;
+            overflow: hidden; /* Prevents scrollbars during the modal fade */
         }
-        /* The Corner Window - BORDER REMOVED FOR SEAMLESS BLEND */
+
+        /* --- THE ENTRANCE MODAL --- */
+        #entrance-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 1.5s ease; /* Slow, dramatic fade out */
+        }
+        #btn-enter {
+            background: none;
+            border: 1px solid #333;
+            color: #777;
+            font-family: monospace;
+            font-size: 1.2rem;
+            padding: 15px 30px;
+            cursor: pointer;
+            transition: all 0.5s ease;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        #btn-enter:hover {
+            color: #ccc;
+            border-color: #666;
+            box-shadow: 0 0 15px rgba(255,255,255,0.1);
+        }
+
+        /* --- THE CORNER --- */
         #corner-container {
             width: 90vw;
             max-width: 600px;
             aspect-ratio: 1/1;
-            /* Pointing to the PNG file now */
             background-image: url('dark-corner.png'); 
             background-size: cover;
             background-position: center;
-            /* Box-shadow remains to provide slight depth, but no edge */
             box-shadow: 0 0 50px rgba(0,0,0,1); 
             transition: background-image 0.2s ease-in-out;
         }
-        /* The Mood Controls */
+
+        /* --- MOOD CONTROLS --- */
         .controls {
             margin-top: 30px;
             display: flex;
@@ -39,7 +72,7 @@
             gap: 10px;
             justify-content: center;
         }
-        button {
+        button.control-btn {
             background-color: #111;
             color: #777;
             border: 1px solid #333;
@@ -48,11 +81,11 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        button:hover {
+        button.control-btn:hover {
             background-color: #222;
             color: #aaa;
         }
-        button.active {
+        button.control-btn.active {
             border-color: #777;
             color: #eee;
             background-color: #333;
@@ -69,13 +102,17 @@
 </head>
 <body>
 
+    <div id="entrance-modal">
+        <button id="btn-enter" onclick="enterCorner()">Enter the Crying Corner</button>
+    </div>
+
     <div id="corner-container"></div>
 
     <div class="controls">
-        <button id="btn-dark" class="active" onclick="setLighting('dark')">Pitch Black</button>
-        <button id="btn-spotlight" onclick="setLighting('spotlight')">Spotlight (Center)</button>
-        <button id="btn-offset" onclick="setLighting('offset')">Spotlight (Offset)</button>
-        <button id="btn-music" onclick="toggleMusic()">Start the Violins</button>
+        <button id="btn-dark" class="control-btn active" onclick="setLighting('dark')">Pitch Black</button>
+        <button id="btn-spotlight" class="control-btn" onclick="setLighting('spotlight')">Spotlight (Center)</button>
+        <button id="btn-offset" class="control-btn" onclick="setLighting('offset')">Spotlight (Offset)</button>
+        <button id="btn-music" class="control-btn" onclick="toggleMusic()">Start the Violins</button>
     </div>
 
     <audio id="sad-music" loop>
@@ -83,12 +120,25 @@
     </audio>
 
     <script>
+        const modal = document.getElementById('entrance-modal');
         const corner = document.getElementById('corner-container');
         const music = document.getElementById('sad-music');
         const musicBtn = document.getElementById('btn-music');
 
+        function enterCorner() {
+            // Start the music immediately upon interaction
+            music.play();
+            musicBtn.innerText = "Stop the Violins";
+            musicBtn.classList.add('playing');
+
+            // Fade out the black screen, then hide it completely so buttons underneath are clickable
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 1500); // Wait 1.5 seconds for the fade CSS transition to finish
+        }
+
         function setLighting(state) {
-            // Swap out the background image (All PNGs now)
             if (state === 'dark') {
                 corner.style.backgroundImage = "url('dark-corner.png')";
             } else if (state === 'spotlight') {
@@ -97,7 +147,6 @@
                 corner.style.backgroundImage = "url('spotlight-offset.png')";
             }
 
-            // Highlight the active button
             document.querySelectorAll('.controls button:not(#btn-music)').forEach(btn => btn.classList.remove('active'));
             document.getElementById('btn-' + state).classList.add('active');
         }
