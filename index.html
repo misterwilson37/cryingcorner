@@ -57,7 +57,7 @@
             width: 90vw;
             max-width: 800px;
             aspect-ratio: 16/9; 
-            background-image: url('dark-corner.png'); /* <-- THIS WAS THE CULPRIT! */
+            background-image: url('dark-corner.png'); 
             background-size: contain; 
             background-repeat: no-repeat;
             background-position: center;
@@ -67,6 +67,12 @@
         /* --- MOOD CONTROLS --- */
         .controls {
             margin-top: 30px;
+            display: flex;
+            flex-direction: column; /* Stacks the rows vertically */
+            gap: 15px;
+            align-items: center;
+        }
+        .controls-row {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
@@ -90,13 +96,22 @@
             color: #eee;
             background-color: #333;
         }
+        
+        /* Default music button state */
         #btn-music {
-            border-color: #522;
-            color: #d88;
+            border-color: #333;
+            color: #777;
         }
+        
+        /* Active music button state (Playing) - Dark Red */
         #btn-music.playing {
-            border-color: #252;
-            color: #8d8;
+            border-color: #611;
+            color: #d55;
+            background-color: #311;
+        }
+        #btn-music.playing:hover {
+            background-color: #411;
+            color: #f77;
         }
     </style>
 </head>
@@ -109,10 +124,16 @@
     <div id="corner-container"></div>
 
     <div class="controls">
-        <button id="btn-dark" class="control-btn active" onclick="setLighting('dark')">Pitch Black</button>
-        <button id="btn-spotlight" class="control-btn" onclick="setLighting('spotlight')">Spotlight (Center)</button>
-        <button id="btn-offset" class="control-btn" onclick="setLighting('offset')">Spotlight (Offset)</button>
-        <button id="btn-music" class="control-btn" onclick="toggleMusic()">Start the Violins</button>
+        <div class="controls-row">
+            <button id="btn-darkness" class="control-btn active" onclick="setLighting('darkness')">Darkness</button>
+            <button id="btn-spotlight" class="control-btn" onclick="setLighting('spotlight')">Spotlight (Center)</button>
+            <button id="btn-offset" class="control-btn" onclick="setLighting('offset')">Spotlight (Offset)</button>
+            <button id="btn-pitch-black" class="control-btn" onclick="setLighting('pitch-black')">Pitch Black</button>
+        </div>
+        
+        <div class="controls-row">
+            <button id="btn-music" class="control-btn" onclick="toggleMusic()">Start the Violins</button>
+        </div>
     </div>
 
     <audio id="sad-music" loop>
@@ -137,15 +158,19 @@
         }
 
         function setLighting(state) {
-            if (state === 'dark') {
+            // Update the image based on the state
+            if (state === 'darkness') {
                 corner.style.backgroundImage = "url('dark-corner.png')";
             } else if (state === 'spotlight') {
                 corner.style.backgroundImage = "url('spotlight-corner.png')";
             } else if (state === 'offset') {
                 corner.style.backgroundImage = "url('spotlight-offset.png')";
+            } else if (state === 'pitch-black') {
+                corner.style.backgroundImage = "none"; // Removes the image completely
             }
 
-            document.querySelectorAll('.controls button:not(#btn-music)').forEach(btn => btn.classList.remove('active'));
+            // Update button active states for the first row only
+            document.querySelectorAll('.controls-row:first-child .control-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('btn-' + state).classList.add('active');
         }
 
