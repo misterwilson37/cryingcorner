@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Crying Corner</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
         body, html {
@@ -86,8 +84,7 @@
         
         /* Easter Egg Layers */
         #layer-counting { background-image: url('dark-counting.png'); }
-        #layer-mates1 { background-image: url('mates1.png'); }
-        #layer-mates2 { background-image: url('mates2.png'); }
+        #layer-chair { background-image: url('red-chair.png'); }
 
         /* --- MOOD CONTROLS --- */
         .controls {
@@ -126,7 +123,7 @@
         
         /* Hidden Secret Buttons */
         .secret-btn {
-            opacity: 0; /* Invisible but still takes up space */
+            opacity: 0; 
             transition: opacity 1.5s ease; 
         }
         .secret-btn.revealed {
@@ -160,8 +157,7 @@
         <div id="layer-spotlight" class="bg-layer"></div>
         <div id="layer-offset" class="bg-layer"></div>
         <div id="layer-counting" class="bg-layer"></div>
-        <div id="layer-mates1" class="bg-layer"></div>
-        <div id="layer-mates2" class="bg-layer"></div>
+        <div id="layer-chair" class="bg-layer"></div>
     </div>
 
     <div class="controls">
@@ -175,7 +171,7 @@
         <div class="controls-row">
             <button id="btn-count" class="control-btn secret-btn" onclick="triggerCount()">Count the tears</button>
             <button id="btn-music" class="control-btn" onclick="toggleMusic()">Start the Violins</button>
-            <button id="btn-done" class="control-btn secret-btn" onclick="triggerMates()">done</button>
+            <button id="btn-chair" class="control-btn secret-btn" onclick="triggerChair()">Sit with It</button>
         </div>
     </div>
 
@@ -188,7 +184,7 @@
         const music = document.getElementById('sad-music');
         const musicBtn = document.getElementById('btn-music');
         const btnCount = document.getElementById('btn-count');
-        const btnDone = document.getElementById('btn-done');
+        const btnChair = document.getElementById('btn-chair');
 
         function enterCorner() {
             music.play();
@@ -235,70 +231,27 @@
 
         function triggerCount() {
             if (!countRevealed) {
-                // Click 1: Trigger the fade-in, but don't show the image
                 countRevealed = true;
                 btnCount.classList.add('revealed');
-                
-                // Wait exactly 1.5s for the CSS fade to finish before unlocking the button
-                setTimeout(() => {
-                    countClickable = true;
-                }, 1500); 
-                return; // Stop the script here so the image doesn't change yet
+                setTimeout(() => { countClickable = true; }, 1500); 
+                return; 
             }
-
-            // Ignore clicks if the button is still in the process of fading in
             if (!countClickable) return; 
-
-            // Click 2+: Change the image
             setLighting('counting');
         }
 
-        let doneRevealed = false;
-        let doneClickable = false;
-        let matesStage = 0; // 0 = mates1 next, 1 = mates2 next
+        let chairRevealed = false;
+        let chairClickable = false;
 
-        function triggerMates() {
-            if (!doneRevealed) {
-                // Click 1: Trigger the fade-in
-                doneRevealed = true;
-                btnDone.classList.add('revealed');
-                
-                setTimeout(() => {
-                    doneClickable = true;
-                }, 1500);
+        function triggerChair() {
+            if (!chairRevealed) {
+                chairRevealed = true;
+                btnChair.classList.add('revealed');
+                setTimeout(() => { chairClickable = true; }, 1500);
                 return;
             }
-
-            if (!doneClickable) return;
-
-            if (matesStage === 0) {
-                // Click 2: Show mates1
-                setLighting('mates1');
-                
-                // Temporarily lock the button so they can't skip the image fade
-                doneClickable = false; 
-                
-                setTimeout(() => {
-                    btnDone.innerText = "it's luck";
-                    doneClickable = true; // Unlock button for the final click
-                    matesStage = 1;
-                }, 1500);
-                
-            } else if (matesStage === 1) {
-                // Click 3: Show mates2 and throw confetti
-                setLighting('mates2');
-                fireConfetti();
-                // Optional: set doneClickable = false here if you only want confetti once
-            }
-        }
-
-        function fireConfetti() {
-            confetti({
-                particleCount: 150,
-                spread: 80,
-                origin: { y: 0.6 },
-                colors: ['#555555', '#888888', '#bbbbbb', '#ffffff'] 
-            });
+            if (!chairClickable) return;
+            setLighting('chair');
         }
     </script>
 </body>
