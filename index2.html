@@ -63,7 +63,7 @@
             aspect-ratio: 16/9; 
         }
 
-        /* --- THE IMAGE LAYERS (ALL PNGs NOW) --- */
+        /* --- THE IMAGE LAYERS (ALL PNGs) --- */
         .bg-layer {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -124,9 +124,13 @@
             background-color: #333;
         }
         
-        /* Hidden Class for Easter Eggs */
-        .hidden-btn {
-            display: none !important;
+        /* Hidden Secret Buttons */
+        .secret-btn {
+            opacity: 0; /* Invisible but still takes up space and is clickable */
+            transition: opacity 1.5s ease; /* Matches the image fade speed */
+        }
+        .secret-btn.revealed {
+            opacity: 1;
         }
 
         /* Music Button Styling */
@@ -170,9 +174,9 @@
         </div>
         
         <div class="controls-row">
-            <button id="btn-count" class="control-btn hidden-btn" onclick="setLighting('counting')">Count the tears</button>
+            <button id="btn-count" class="control-btn secret-btn" onclick="triggerCount()">Count the tears</button>
             <button id="btn-music" class="control-btn" onclick="toggleMusic()">Start the Violins</button>
-            <button id="btn-done" class="control-btn hidden-btn" onclick="triggerMates()">done</button>
+            <button id="btn-done" class="control-btn secret-btn" onclick="triggerMates()">done</button>
         </div>
     </div>
 
@@ -208,19 +212,15 @@
                 if(targetLayer) targetLayer.classList.add('active');
             }
 
-            // Update button active states (only for the top row to keep it clean)
+            // Update button active states (only for the top row visual controls)
             document.querySelectorAll('.controls-row:first-child .control-btn').forEach(btn => btn.classList.remove('active'));
             const activeBtn = document.getElementById('btn-' + state);
-            if (activeBtn && activeBtn.parentElement.classList.contains('controls-row')) {
+            if (activeBtn && activeBtn.closest('.controls-row') === document.querySelector('.controls-row:first-child')) {
                 activeBtn.classList.add('active');
             }
         }
 
         function toggleMusic() {
-            // Easter Egg Trigger: Reveal the hidden buttons when the music is interacted with
-            btnCount.classList.remove('hidden-btn');
-            btnDone.classList.remove('hidden-btn');
-
             if (music.paused) {
                 music.play();
                 musicBtn.innerText = "Stop the Violins";
@@ -232,26 +232,37 @@
             }
         }
 
+        function triggerCount() {
+            if (!btnCount.classList.contains('revealed')) {
+                btnCount.classList.add('revealed');
+            }
+            setLighting('counting');
+        }
+
         function triggerMates() {
-            if (btnDone.innerText === "done") {
-                // First click: Show mates1 and change text
+            if (!btnDone.classList.contains('revealed')) {
+                // First invisible click: Show mates1 and fade button in
+                btnDone.classList.add('revealed');
                 setLighting('mates1');
-                btnDone.innerText = "it's luck";
-                fireConfetti();
-            } else {
-                // Second click: Show mates2
+                
+                // Wait 1.5s for the image crossfade to finish, then change the button text
+                setTimeout(() => {
+                    btnDone.innerText = "it's luck";
+                }, 1500);
+                
+            } else if (btnDone.innerText === "it's luck") {
+                // Second click: Show mates2 and launch confetti
                 setLighting('mates2');
                 fireConfetti();
             }
         }
 
         function fireConfetti() {
-            // A quick burst of standard confetti
             confetti({
                 particleCount: 150,
                 spread: 80,
                 origin: { y: 0.6 },
-                colors: ['#555555', '#888888', '#bbbbbb', '#ffffff'] // Grayscale confetti to match the mood!
+                colors: ['#555555', '#888888', '#bbbbbb', '#ffffff'] 
             });
         }
     </script>
