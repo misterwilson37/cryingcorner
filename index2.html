@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Crying Corner</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&display=swap" rel="stylesheet">
-
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
@@ -34,7 +31,7 @@
             position: relative; width: 90vw; max-width: 800px; aspect-ratio: 16/9; 
         }
 
-        /* --- THE BASE IMAGE LAYERS --- */
+        /* --- THE IMAGE LAYERS --- */
         .bg-layer {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background-size: contain; background-repeat: no-repeat;
@@ -47,38 +44,7 @@
         #layer-spotlight { background-image: url('spotlight-corner.png'); }
         #layer-offset { background-image: url('spotlight-offset.png'); }
         #layer-chair { background-image: url('red-chair.png'); }
-
-        /* --- TALLY OVERLAY SYSTEM --- */
-        #layer-tallies {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background-image: url('counting-layer.png'); 
-            background-size: contain; background-repeat: no-repeat;
-            background-position: center; z-index: 20; 
-            pointer-events: none; opacity: 0; 
-            transition: opacity 1.5s ease-in-out;
-            mix-blend-mode: screen; filter: opacity(0.75); 
-            -webkit-mask-image: linear-gradient(to right, black 0%, transparent 0%);
-            mask-image: linear-gradient(to right, black 0%, transparent 0%);
-        }
-        #layer-tallies.active { opacity: 1; }
-
-        /* --- DYNAMIC WALL TEXT --- */
-        #tally-text-container {
-            position: absolute;
-            top: 45%;         
-            right: 42%;       
-            z-index: 21;
-            opacity: 0;
-            transition: opacity 1.5s ease-in-out;
-            pointer-events: none;
-            text-align: center;
-            font-family: 'Shadows Into Light', cursive;
-            font-size: 1.6rem;
-            color: rgba(200, 200, 200, 0.4);
-            transform: perspective(500px) rotateY(-25deg) rotateZ(1deg);
-        }
-        /* Reveal text ONLY if sets > 0 AND Count is toggled on */
-        #tally-text-container.active.show-sets { opacity: 1; }
+        #layer-counting { background-image: url('dark-counting.png'); }
 
         /* --- CONTROLS --- */
         .controls { margin-top: 30px; display: flex; flex-direction: column; gap: 15px; align-items: center; z-index: 10; }
@@ -101,13 +67,11 @@
     </div>
 
     <div id="corner-container">
-        <div id="layer-tallies"></div>
-        <div id="tally-text-container">Sets of 100:<br><span id="sets-count">0</span></div>
-
         <div id="layer-darkness" class="bg-layer active"></div>
         <div id="layer-spotlight" class="bg-layer"></div>
         <div id="layer-offset" class="bg-layer"></div>
         <div id="layer-chair" class="bg-layer"></div>
+        <div id="layer-counting" class="bg-layer"></div>
     </div>
 
     <div class="controls">
@@ -119,7 +83,7 @@
         </div>
         
         <div class="controls-row">
-            <button id="btn-count" class="control-btn secret-btn" onclick="triggerCount()">Count the tears</button>
+            <button id="btn-counting" class="control-btn secret-btn" onclick="triggerCount()">Count the tears</button>
             <button id="btn-music" class="control-btn" onclick="toggleMusic()">Start the Violins</button>
             <button id="btn-chair" class="control-btn secret-btn" onclick="triggerChair()">Sit with it</button>
         </div>
@@ -132,57 +96,12 @@
         const music = document.getElementById('sad-music');
         const musicBtn = document.getElementById('btn-music');
         const hiddenSobbing = document.getElementById('hidden-sobbing');
-        const btnCount = document.getElementById('btn-count');
+        const btnCount = document.getElementById('btn-counting');
         const btnChair = document.getElementById('btn-chair');
-        const tallyLayer = document.getElementById('layer-tallies');
-        const tallyTextContainer = document.getElementById('tally-text-container');
-        const setsCountDisplay = document.getElementById('sets-count');
 
-        // Set Sobbing Volume to 25%
         hiddenSobbing.volume = 0.25;
 
-        // --- STABLE VISITOR COUNTER ---
-        let currentVisitCount = 0;
-
-        async function updateCounter() {
-            try {
-                // Using a fallback count API
-                const response = await fetch('https://api.counterapi.dev/v1/cryingcorner/misterwilson/up');
-                const data = await response.json();
-                currentVisitCount = data.count;
-
-                // --- ADD THIS LINE TO TEST ---
-                currentVisitCount = 137; 
-                // -----------------------------
-                
-                renderTallies(currentVisitCount);
-            } catch (e) {
-                console.error("Counter failed, using local session increment", e);
-                renderTallies(1); // Visual fallback
-            }
-        }
-
-        function renderTallies(count) {
-            const setsOf100 = Math.floor(count / 100);
-            const remainder = count % 100;
-            
-            setsCountDisplay.innerText = setsOf100;
-            
-            // Logic: Hide text if sets are 0
-            if (setsOf100 > 0) {
-                tallyTextContainer.classList.add('show-sets');
-            } else {
-                tallyTextContainer.classList.remove('show-sets');
-            }
-
-            let percentage = (remainder === 0 && count > 0) ? 100 : remainder;
-            
-            tallyLayer.style.maskImage = `linear-gradient(to right, black ${percentage}%, transparent ${percentage}%)`;
-            tallyLayer.style.webkitMaskImage = `linear-gradient(to right, black ${percentage}%, transparent ${percentage}%)`;
-        }
-
         function enterCorner() {
-            updateCounter();
             music.play();
             musicBtn.innerText = "Stop the Violins";
             musicBtn.classList.add('playing');
@@ -197,10 +116,9 @@
                 const targetLayer = document.getElementById('layer-' + state);
                 if(targetLayer) targetLayer.classList.add('active');
             }
-            document.querySelectorAll('.controls-row:first-child .control-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.controls-row .control-btn').forEach(btn => btn.classList.remove('active'));
             const activeBtn = document.getElementById('btn-' + state);
             if (activeBtn) activeBtn.classList.add('active');
-            if (state !== 'chair') btnChair.classList.remove('active');
         }
 
         function toggleMusic() {
@@ -217,7 +135,7 @@
             }, randomTime);
         }
 
-        let countRevealed = false, countClickable = false, talliesVisible = false;
+        let countRevealed = false, countClickable = false;
         function triggerCount() {
             if (!countRevealed) { 
                 countRevealed = true; 
@@ -226,19 +144,19 @@
                 return; 
             }
             if (!countClickable) return;
-            talliesVisible = !talliesVisible;
-            tallyLayer.classList.toggle('active', talliesVisible);
-            tallyTextContainer.classList.toggle('active', talliesVisible);
-            btnCount.innerText = talliesVisible ? "live in ignorance" : "Count the tears";
-            btnCount.classList.toggle('active', talliesVisible);
+            setBaseLighting('counting');
         }
 
         let chairRevealed = false, chairClickable = false;
         function triggerChair() {
-            if (!chairRevealed) { chairRevealed = true; btnChair.classList.add('revealed'); setTimeout(() => { chairClickable = true; }, 1500); return; }
+            if (!chairRevealed) { 
+                chairRevealed = true; 
+                btnChair.classList.add('revealed'); 
+                setTimeout(() => { chairClickable = true; }, 1500); 
+                return; 
+            }
             if (!chairClickable) return;
             setBaseLighting('chair');
-            btnChair.classList.add('active');
         }
     </script>
 </body>
