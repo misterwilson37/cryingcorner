@@ -137,13 +137,12 @@
         }
 
         function setLighting(state) {
-            // ALL references updated to .jpg
             if (state === 'dark') {
-                corner.style.backgroundImage = "url('dark-corner.jpg')";
+                corner.style.backgroundImage = "url('dark-corner.png')";
             } else if (state === 'spotlight') {
-                corner.style.backgroundImage = "url('spotlight-corner.jpg')";
+                corner.style.backgroundImage = "url('spotlight-corner.png')";
             } else if (state === 'offset') {
-                corner.style.backgroundImage = "url('spotlight-offset.jpg')";
+                corner.style.backgroundImage = "url('spotlight-offset.png')";
             }
 
             document.querySelectorAll('.controls button:not(#btn-music)').forEach(btn => btn.classList.remove('active'));
