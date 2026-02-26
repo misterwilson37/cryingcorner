@@ -23,7 +23,7 @@
             width: 90vw;
             max-width: 600px;
             aspect-ratio: 1/1;
-            background-image: url('dark-corner.jpg');
+            background-image: url('dark-corner.png');
             background-size: cover;
             background-position: center;
             border: 2px solid #222;
@@ -89,11 +89,11 @@
         function setLighting(state) {
             // Swap out the background image
             if (state === 'dark') {
-                corner.style.backgroundImage = "url('dark-corner.jpg')";
+                corner.style.backgroundImage = "url('dark-corner.png')";
             } else if (state === 'spotlight') {
-                corner.style.backgroundImage = "url('spotlight-corner.jpg')";
+                corner.style.backgroundImage = "url('spotlight-corner.png')";
             } else if (state === 'offset') {
-                corner.style.backgroundImage = "url('spotlight-offset.jpg')";
+                corner.style.backgroundImage = "url('spotlight-offset.png')";
             }
 
             // Highlight the active button
