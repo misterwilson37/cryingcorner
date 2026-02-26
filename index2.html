@@ -62,23 +62,23 @@
         }
         #layer-tallies.active { opacity: 1; }
 
-        /* --- DYNAMIC WALL TEXT (Fine-tune here!) --- */
+        /* --- DYNAMIC WALL TEXT --- */
         #tally-text-container {
             position: absolute;
-            top: 48%;         /* Adjust up/down */
-            right: 18%;       /* Adjust left/right */
+            top: 45%;         
+            right: 42%;       
             z-index: 21;
             opacity: 0;
             transition: opacity 1.5s ease-in-out;
             pointer-events: none;
             text-align: center;
             font-family: 'Shadows Into Light', cursive;
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             color: rgba(200, 200, 200, 0.4);
-            /* This line handles the angle. Change -5deg to match your wall's slant */
-            transform: perspective(400px) rotateY(-15deg) rotateZ(2deg);
+            transform: perspective(500px) rotateY(-25deg) rotateZ(1deg);
         }
-        #tally-text-container.active { opacity: 1; }
+        /* Reveal text ONLY if sets > 0 AND Count is toggled on */
+        #tally-text-container.active.show-sets { opacity: 1; }
 
         /* --- CONTROLS --- */
         .controls { margin-top: 30px; display: flex; flex-direction: column; gap: 15px; align-items: center; z-index: 10; }
@@ -138,29 +138,42 @@
         const tallyTextContainer = document.getElementById('tally-text-container');
         const setsCountDisplay = document.getElementById('sets-count');
 
-        // Set Sobbing Volume to 50%
-        hiddenSobbing.volume = 0.5;
+        // Set Sobbing Volume to 25%
+        hiddenSobbing.volume = 0.25;
 
-        // --- NEW STABLE VISITOR API ---
-        const namespace = 'cryingcorner.misterwilson.org';
-        const key = 'total_visits';
+        // --- STABLE VISITOR COUNTER ---
+        let currentVisitCount = 0;
 
         async function updateCounter() {
             try {
-                // This 'hit' endpoint increments the count and returns the new value
-                const response = await fetch(`https://api.countapi.it/hit/${namespace}/${key}`);
+                // Using a fallback count API
+                const response = await fetch('https://api.counterapi.dev/v1/cryingcorner/misterwilson/up');
                 const data = await response.json();
-                const count = data.value;
-                
-                const setsOf100 = Math.floor(count / 100);
-                const remainder = count % 100;
-                
-                setsCountDisplay.innerText = setsOf100;
-                let percentage = (remainder === 0 && count > 0) ? 100 : remainder;
-                
-                tallyLayer.style.maskImage = `linear-gradient(to right, black ${percentage}%, transparent ${percentage}%)`;
-                tallyLayer.style.webkitMaskImage = `linear-gradient(to right, black ${percentage}%, transparent ${percentage}%)`;
-            } catch (e) { console.error("Counter failed", e); }
+                currentVisitCount = data.count;
+                renderTallies(currentVisitCount);
+            } catch (e) {
+                console.error("Counter failed, using local session increment", e);
+                renderTallies(1); // Visual fallback
+            }
+        }
+
+        function renderTallies(count) {
+            const setsOf100 = Math.floor(count / 100);
+            const remainder = count % 100;
+            
+            setsCountDisplay.innerText = setsOf100;
+            
+            // Logic: Hide text if sets are 0
+            if (setsOf100 > 0) {
+                tallyTextContainer.classList.add('show-sets');
+            } else {
+                tallyTextContainer.classList.remove('show-sets');
+            }
+
+            let percentage = (remainder === 0 && count > 0) ? 100 : remainder;
+            
+            tallyLayer.style.maskImage = `linear-gradient(to right, black ${percentage}%, transparent ${percentage}%)`;
+            tallyLayer.style.webkitMaskImage = `linear-gradient(to right, black ${percentage}%, transparent ${percentage}%)`;
         }
 
         function enterCorner() {
@@ -201,7 +214,12 @@
 
         let countRevealed = false, countClickable = false, talliesVisible = false;
         function triggerCount() {
-            if (!countRevealed) { countRevealed = true; btnCount.classList.add('revealed'); setTimeout(() => { countClickable = true; }, 1500); return; }
+            if (!countRevealed) { 
+                countRevealed = true; 
+                btnCount.classList.add('revealed'); 
+                setTimeout(() => { countClickable = true; }, 1500); 
+                return; 
+            }
             if (!countClickable) return;
             talliesVisible = !talliesVisible;
             tallyLayer.classList.toggle('active', talliesVisible);
