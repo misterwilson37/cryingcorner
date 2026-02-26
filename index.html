@@ -10,7 +10,7 @@
             padding: 0;
             width: 100%;
             height: 100%;
-            background-color: #000000; /* Changed to pure black to match the image edges */
+            background-color: #000000; /* Pure black */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -32,7 +32,7 @@
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            transition: opacity 1.5s ease; /* Slow, dramatic fade out */
+            transition: opacity 1.5s ease; 
         }
         #btn-enter {
             background: none;
@@ -55,13 +55,12 @@
         /* --- THE CORNER --- */
         #corner-container {
             width: 90vw;
-            max-width: 800px; /* Made slightly wider for the landscape image */
-            aspect-ratio: 16/9; /* Changed from 1/1 square to rectangle */
-            background-image: url('dark-corner.jpg'); 
-            background-size: contain; /* 'contain' ensures no cropping happens */
+            max-width: 800px;
+            aspect-ratio: 16/9; 
+            background-image: url('dark-corner.png'); /* <-- THIS WAS THE CULPRIT! */
+            background-size: contain; 
             background-repeat: no-repeat;
             background-position: center;
-            /* Removed the box-shadow so it doesn't create a fake edge */
             transition: background-image 0.2s ease-in-out;
         }
 
@@ -127,25 +126,24 @@
         const musicBtn = document.getElementById('btn-music');
 
         function enterCorner() {
-            // Start the music immediately upon interaction
             music.play();
             musicBtn.innerText = "Stop the Violins";
             musicBtn.classList.add('playing');
 
-            // Fade out the black screen, then hide it completely so buttons underneath are clickable
             modal.style.opacity = '0';
             setTimeout(() => {
                 modal.style.display = 'none';
-            }, 1500); // Wait 1.5 seconds for the fade CSS transition to finish
+            }, 1500); 
         }
 
         function setLighting(state) {
+            // ALL references updated to .jpg
             if (state === 'dark') {
-                corner.style.backgroundImage = "url('dark-corner.png')";
+                corner.style.backgroundImage = "url('dark-corner.jpg')";
             } else if (state === 'spotlight') {
-                corner.style.backgroundImage = "url('spotlight-corner.png')";
+                corner.style.backgroundImage = "url('spotlight-corner.jpg')";
             } else if (state === 'offset') {
-                corner.style.backgroundImage = "url('spotlight-offset.png')";
+                corner.style.backgroundImage = "url('spotlight-offset.jpg')";
             }
 
             document.querySelectorAll('.controls button:not(#btn-music)').forEach(btn => btn.classList.remove('active'));
