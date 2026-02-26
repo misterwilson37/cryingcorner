@@ -10,14 +10,14 @@
             padding: 0;
             width: 100%;
             height: 100%;
-            background-color: #050505;
+            background-color: #000000; /* Changed to pure black to match the image edges */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             font-family: monospace;
             color: #555;
-            overflow: hidden; /* Prevents scrollbars during the modal fade */
+            overflow: hidden; 
         }
 
         /* --- THE ENTRANCE MODAL --- */
@@ -55,12 +55,13 @@
         /* --- THE CORNER --- */
         #corner-container {
             width: 90vw;
-            max-width: 600px;
-            aspect-ratio: 1/1;
-            background-image: url('dark-corner.png'); 
-            background-size: cover;
+            max-width: 800px; /* Made slightly wider for the landscape image */
+            aspect-ratio: 16/9; /* Changed from 1/1 square to rectangle */
+            background-image: url('dark-corner.jpg'); 
+            background-size: contain; /* 'contain' ensures no cropping happens */
+            background-repeat: no-repeat;
             background-position: center;
-            box-shadow: 0 0 50px rgba(0,0,0,1); 
+            /* Removed the box-shadow so it doesn't create a fake edge */
             transition: background-image 0.2s ease-in-out;
         }
 
