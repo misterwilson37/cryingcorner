@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Crying Corner</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #050505;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            color: #555;
+        }
+        /* The Corner Window */
+        #corner-container {
+            width: 90vw;
+            max-width: 600px;
+            aspect-ratio: 1/1;
+            background-image: url('dark-corner.jpg');
+            background-size: cover;
+            background-position: center;
+            border: 2px solid #222;
+            box-shadow: 0 0 30px rgba(0,0,0,0.9);
+            transition: background-image 0.2s ease-in-out;
+        }
+        /* The Mood Controls */
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        button {
+            background-color: #111;
+            color: #777;
+            border: 1px solid #333;
+            padding: 12px 20px;
+            font-family: monospace;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background-color: #222;
+            color: #aaa;
+        }
+        button.active {
+            border-color: #777;
+            color: #eee;
+            background-color: #333;
+        }
+        #btn-music {
+            border-color: #522;
+            color: #d88;
+        }
+        #btn-music.playing {
+            border-color: #252;
+            color: #8d8;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="corner-container"></div>
+
+    <div class="controls">
+        <button id="btn-dark" class="active" onclick="setLighting('dark')">Pitch Black</button>
+        <button id="btn-spotlight" onclick="setLighting('spotlight')">Spotlight (Center)</button>
+        <button id="btn-offset" onclick="setLighting('offset')">Spotlight (Offset)</button>
+        <button id="btn-music" onclick="toggleMusic()">Start the Violins</button>
+    </div>
+
+    <audio id="sad-music" loop>
+        <source src="sad-violin.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const corner = document.getElementById('corner-container');
+        const music = document.getElementById('sad-music');
+        const musicBtn = document.getElementById('btn-music');
+
+        function setLighting(state) {
+            // Swap out the background image
+            if (state === 'dark') {
+                corner.style.backgroundImage = "url('dark-corner.jpg')";
+            } else if (state === 'spotlight') {
+                corner.style.backgroundImage = "url('spotlight-corner.jpg')";
+            } else if (state === 'offset') {
+                corner.style.backgroundImage = "url('spotlight-offset.jpg')";
+            }
+
+            // Highlight the active button
+            document.querySelectorAll('.controls button:not(#btn-music)').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + state).classList.add('active');
+        }
+
+        function toggleMusic() {
+            if (music.paused) {
+                music.play();
+                musicBtn.innerText = "Stop the Violins";
+                musicBtn.classList.add('playing');
+            } else {
+                music.pause();
+                musicBtn.innerText = "Start the Violins";
+                musicBtn.classList.remove('playing');
+            }
+        }
+    </script>
+</body>
+</html>
